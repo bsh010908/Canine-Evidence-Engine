@@ -83,7 +83,7 @@ describe("search UI", () => {
     fireEvent.change(screen.getByLabelText(/유전자명/), {
       target: { value: "BRAF" },
     });
-    fireEvent.change(screen.getByLabelText("가져올 논문 수"), {
+    fireEvent.change(screen.getByLabelText("결과 수"), {
       target: { value: "3" },
     });
     fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
@@ -96,9 +96,9 @@ describe("search UI", () => {
     ).toHaveAttribute("href", fixture.articles[0].source_url);
     expect(screen.getAllByText("연구 대상 종 미확인")).toHaveLength(3);
     fireEvent.click(
-      screen.getAllByRole("button", { name: "전체 초록 보기 +" })[0],
+      screen.getAllByRole("button", { name: "초록 펼치기" })[0],
     );
-    expect(screen.getByRole("button", { name: "초록 접기 −" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "초록 접기" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
@@ -216,11 +216,25 @@ describe("search UI", () => {
 });
 
 describe("search screen transition", () => {
-  it("starts with the approved guidance and quick search opens results", async () => {
+  it("enables reset only when conditions differ from defaults and restores them", () => {
+    render(<App />);
+    const reset = screen.getByRole("button", { name: "조건 초기화" });
+    expect(reset).toBeDisabled();
+    fireEvent.click(screen.getByLabelText("개"));
+    fireEvent.change(screen.getByLabelText("암종 키워드"), {
+      target: { value: "lymphoma" },
+    });
+    expect(reset).toBeEnabled();
+    fireEvent.click(reset);
+    expect(screen.getByLabelText("전체")).toBeChecked();
+    expect(screen.getByLabelText("암종 키워드")).toHaveValue("");
+    expect(reset).toBeDisabled();
+  });
+  it("starts with a single search heading and quick search opens results", async () => {
     const mock = mockResponse(data());
     render(<App />);
     expect(
-      screen.getByRole("heading", { name: "어떤 유전자를 찾고 계신가요?" }),
+      screen.getByRole("heading", { name: "유전자 문헌 검색" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("region", { name: "논문 검색 결과" }),
@@ -231,7 +245,7 @@ describe("search screen transition", () => {
     expect(mock).toHaveBeenCalledOnce();
     expect(JSON.parse(mock.mock.calls[0][1].body).gene).toBe("BRAF");
     expect(
-      screen.queryByRole("heading", { name: "어떤 유전자를 찾고 계신가요?" }),
+      screen.queryByRole("heading", { name: "유전자 문헌 검색" }),
     ).not.toBeInTheDocument();
     expect(screen.getByLabelText(/유전자명/)).toHaveValue("BRAF");
   });
@@ -243,7 +257,7 @@ describe("search screen transition", () => {
       target: { value: "TP53" },
     });
     fireEvent.click(screen.getByLabelText("사람"));
-    fireEvent.change(screen.getByLabelText("가져올 논문 수"), {
+    fireEvent.change(screen.getByLabelText("결과 수"), {
       target: { value: "3" },
     });
     fireEvent.change(screen.getByLabelText("시작 연도"), {
@@ -261,7 +275,7 @@ describe("search screen transition", () => {
     expect(screen.getByLabelText("시작 연도")).toHaveValue(2020);
     expect(screen.getByLabelText("종료 연도")).toHaveValue(2025);
     expect(screen.getByLabelText("암종 키워드")).toHaveValue("melanoma");
-    expect(screen.getByLabelText("가져올 논문 수")).toHaveValue("3");
+    expect(screen.getByLabelText("결과 수")).toHaveValue("3");
     mock.mockRejectedValueOnce(new Error("offline"));
     fireEvent.change(screen.getByLabelText(/유전자명/), {
       target: { value: "BRAF" },

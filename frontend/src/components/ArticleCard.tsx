@@ -11,15 +11,14 @@ export default function ArticleCard({
   const [allAuthors, setAllAuthors] = useState(false);
   const validSource =
     article.source_url === `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
+  const abstractId = `abstract-${article.pmid}`;
   return (
     <article className="article-card">
-      <div className="article-top">
-        <span className="article-index">
-          {String(index + 1).padStart(2, "0")}
-        </span>
+      <p className="article-meta">
+        <span className="article-index">{index + 1}</span>
         <span className="journal">{article.journal || "저널 정보 없음"}</span>
         <span className="year">{article.publication_year ?? "연도 없음"}</span>
-      </div>
+      </p>
       <h3>{article.title || "제목 정보 없음"}</h3>
       <p className="authors">
         {article.authors.length
@@ -28,42 +27,49 @@ export default function ArticleCard({
             )
           : "저자 정보 없음"}
         {article.authors.length > 3 && (
-          <button onClick={() => setAllAuthors(!allAuthors)}>
+          <button
+            type="button"
+            className="text-button"
+            aria-expanded={allAuthors}
+            onClick={() => setAllAuthors(!allAuthors)}
+          >
             {allAuthors ? "접기" : `외 ${article.authors.length - 3}명`}
           </button>
         )}
       </p>
-      <div className="abstract">
-        <span className="eyebrow">ABSTRACT</span>
-        {article.abstract_available && article.abstract ? (
-          <>
-            <p className={expanded ? "" : "line-clamp-3"}>{article.abstract}</p>
-            <button
-              className="text-button"
-              aria-expanded={expanded}
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? "초록 접기 −" : "전체 초록 보기 +"}
-            </button>
-          </>
-        ) : (
-          <p className="muted">초록 없음</p>
-        )}
-      </div>
-      <div className="identifiers">
-        <span>
-          PMID <strong>{article.pmid}</strong>
-        </span>
-        <span>
-          DOI <strong>{article.doi || "정보 없음"}</strong>
-        </span>
-      </div>
+      {article.abstract_available && article.abstract ? (
+        <div className="abstract">
+          <p id={abstractId} className={expanded ? "" : "line-clamp-3"}>
+            {article.abstract}
+          </p>
+          <button
+            type="button"
+            className="text-button"
+            aria-expanded={expanded}
+            aria-controls={abstractId}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "초록 접기" : "초록 펼치기"}
+          </button>
+        </div>
+      ) : (
+        <p className="abstract muted">초록 없음</p>
+      )}
       <div className="article-footer">
-        <span className="species-badge">
-          <span aria-hidden="true">○</span> 연구 대상 종 미확인
-        </span>
+        <dl className="identifiers">
+          <div>
+            <dt>PMID</dt>
+            <dd>{article.pmid}</dd>
+          </div>
+          <div>
+            <dt>DOI</dt>
+            <dd>{article.doi || "정보 없음"}</dd>
+          </div>
+        </dl>
+        <span className="species-badge">연구 대상 종 미확인</span>
         {validSource ? (
           <a
+            className="source-link"
             href={article.source_url}
             target="_blank"
             rel="noopener noreferrer"

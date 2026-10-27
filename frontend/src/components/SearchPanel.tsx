@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { SearchRequest, Species } from "../types";
+const DEFAULT_LIMIT = "20";
 export default function SearchPanel({ busy, initial, onSearch }: {
   busy: boolean; initial: boolean; onSearch: (r: SearchRequest) => void;
 }) {
@@ -9,9 +10,12 @@ export default function SearchPanel({ busy, initial, onSearch }: {
   const [fromValue, setFromValue] = useState("");
   const [toValue, setToValue] = useState("");
   const [keywordValue, setKeywordValue] = useState("");
-  const [limit, setLimit] = useState("20");
+  const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [error, setError] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const currentYear = new Date().getUTCFullYear();
+  const activeFilters = [species !== "all", period === "custom", keywordValue.trim() !== ""].filter(Boolean).length;
+  const isDefault = activeFilters === 0 && limit === DEFAULT_LIMIT && !fromValue && !toValue;
   function submit(event?: FormEvent<HTMLFormElement>, selectedGene = gene) {
     event?.preventDefault();
     if (busy) return;
@@ -35,50 +39,60 @@ export default function SearchPanel({ busy, initial, onSearch }: {
   }
   function resetFilters() {
     setSpecies("all"); setPeriod("all"); setFromValue(""); setToValue("");
-    setKeywordValue(""); setLimit("20"); setError("");
+    setKeywordValue(""); setLimit(DEFAULT_LIMIT); setError("");
   }
   return (
-    <>
-      <section className="search-band" aria-label="검색 조건">
-        <form className="content-width" onSubmit={submit}>
-          <label className="search-label" htmlFor="gene">유전자 문헌 검색</label>
-          <div className="primary-search">
-            <div className="gene-input">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
-              <input id="gene" aria-label="유전자명" value={gene} onChange={e => setGene(e.target.value)} placeholder="유전자명을 입력하세요 · 예: BRAF, TP53" maxLength={200} required aria-describedby={error ? "input-error" : undefined}/>
+    <section className={`search-band${initial ? " initial" : ""}`} aria-label="검색 조건">
+      <form className="content-width" onSubmit={submit} noValidate>
+        {initial && <h1 className="search-title">유전자 문헌 검색</h1>}
+        <div className="primary-search">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
+          <input id="gene" type="text" enterKeyHint="search" aria-label="유전자명" value={gene} onChange={e => setGene(e.target.value)} placeholder="유전자 기호 입력" maxLength={200} required autoComplete="off" spellCheck={false} aria-invalid={error ? true : undefined} aria-describedby={error ? "input-error" : undefined}/>
+          <button className="search-button" aria-label={busy ? "검색 중" : "논문 검색"} disabled={busy}>{busy ? "검색 중…" : "검색"}</button>
+        </div>
+        {initial && <div className="examples">
+          <span id="examples-label">예시</span>
+          {["BRAF", "TP53"].map(value => <button key={value} type="button" aria-describedby="examples-label" disabled={busy} onClick={() => { setGene(value); submit(undefined, value); }}>{value}</button>)}
+        </div>}
+        {error && <p id="input-error" role="alert" className="field-error">{error}</p>}
+        <button type="button" className="filters-toggle" aria-expanded={filtersOpen} aria-controls="search-options" onClick={() => setFiltersOpen(!filtersOpen)}>
+          검색 조건{activeFilters > 0 && <span className="filter-count">{activeFilters}개 적용</span>}
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg>
+        </button>
+        <div id="search-options" className={`search-options${filtersOpen ? " open" : ""}`}>
+          <fieldset className="field species-filter">
+            <legend className="field-label">종 (MeSH)</legend>
+            <div className="segmented">
+              {([["all", "전체"], ["dog", "개"], ["cat", "고양이"], ["human", "사람"]] as const).map(([value, label]) => (
+                <label key={value} className={species === value ? "selected" : ""}>
+                  <input type="radio" name="species" value={value} checked={species === value} onChange={() => setSpecies(value)}/>{label}
+                </label>
+              ))}
             </div>
-            <button className="search-button" aria-label={busy ? "검색 중" : "논문 검색"} disabled={busy}>{busy ? "검색 중…" : "검색"}</button>
+          </fieldset>
+          <div className="field period-filter">
+            <label className="field-label" htmlFor="period">발행 연도</label>
+            <div className="period-controls">
+              <select id="period" value={period} onChange={e => setPeriod(e.target.value)}><option value="all">전체 기간</option><option value="custom">기간 지정</option></select>
+              {period === "custom" && <>
+                <input type="number" inputMode="numeric" aria-label="시작 연도" value={fromValue} onChange={e => setFromValue(e.target.value)} min="1800" max={currentYear} placeholder="시작"/>
+                <span aria-hidden="true">–</span>
+                <input type="number" inputMode="numeric" aria-label="종료 연도" value={toValue} onChange={e => setToValue(e.target.value)} min="1800" max={currentYear} placeholder="종료"/>
+              </>}
+            </div>
           </div>
-          <div className="search-options">
-            <fieldset className="species-filter">
-              <legend>종 (MeSH)</legend>
-              <div className="species-grid">
-                {([["all", "전체"], ["dog", "개"], ["cat", "고양이"], ["human", "사람"]] as const).map(([value, label]) => (
-                  <label key={value} className={species === value ? "selected" : ""}>
-                    <input type="radio" name="species" value={value} checked={species === value} onChange={() => setSpecies(value)}/>{label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <div className="filter-control"><label htmlFor="period">발행 연도</label><select id="period" value={period} onChange={e => setPeriod(e.target.value)}><option value="all">전체 기간</option><option value="custom">기간 지정</option></select></div>
-            <div className="filter-control cancer-filter"><label htmlFor="cancer">암종</label><input id="cancer" aria-label="암종 키워드" value={keywordValue} onChange={e => setKeywordValue(e.target.value)} maxLength={200} placeholder="전체 · 키워드 입력"/></div>
-            <button type="button" className="reset-button" onClick={resetFilters}>조건 초기화</button>
+          <div className="field cancer-filter">
+            <div className="field-label"><label htmlFor="cancer">암종 키워드</label><span id="cancer-hint" className="optional">직접 입력</span></div>
+            <input id="cancer" aria-describedby="cancer-hint" value={keywordValue} onChange={e => setKeywordValue(e.target.value)} maxLength={200} placeholder="예: melanoma, lymphoma"/>
           </div>
-          {period === "custom" && <div className="year-grid">
-            <label>시작 연도<input type="number" value={fromValue} onChange={e => setFromValue(e.target.value)} min="1800" max={currentYear} placeholder="제한 없음"/></label>
-            <span aria-hidden="true">—</span>
-            <label>종료 연도<input type="number" value={toValue} onChange={e => setToValue(e.target.value)} min="1800" max={currentYear} placeholder="제한 없음"/></label>
-          </div>}
-          <details className="fetch-options"><summary>수집 옵션</summary><label htmlFor="limit">가져올 논문 수</label><select id="limit" value={limit} onChange={e => setLimit(e.target.value)}>{[3,10,20,50,100,200].map(n => <option key={n} value={n}>{n}건</option>)}</select></details>
-          {error && <p id="input-error" role="alert" className="field-error">{error}</p>}
-        </form>
-      </section>
-      {initial && <section className="welcome content-width" aria-labelledby="welcome-title">
-        <p className="welcome-kicker">검색 시작하기</p>
-        <h1 id="welcome-title">어떤 유전자를 찾고 계신가요?</h1>
-        <p>유전자 기호를 입력해 PubMed 연구 문헌과 원본 출처를 탐색하세요.</p>
-        <div className="examples"><span>빠른 검색</span>{["BRAF", "TP53"].map(value => <button key={value} type="button" disabled={busy} onClick={() => { setGene(value); submit(undefined, value); }}>{value}<span aria-hidden="true">→</span></button>)}</div>
-      </section>}
-    </>
+          <div className="field limit-filter">
+            <label className="field-label" htmlFor="limit">결과 수</label>
+            <select id="limit" value={limit} onChange={e => setLimit(e.target.value)}>{[3, 10, 20, 50, 100, 200].map(n => <option key={n} value={n}>{n}건</option>)}</select>
+          </div>
+          <button type="button" className="reset-button" onClick={resetFilters} disabled={isDefault}>조건 초기화</button>
+        </div>
+        {initial && <p className="filter-note">종 (MeSH) 필터는 PubMed 색인 기준이며, 논문의 실제 연구 대상 종을 확정하지 않습니다.</p>}
+      </form>
+    </section>
   );
 }
