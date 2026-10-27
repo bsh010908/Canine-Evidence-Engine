@@ -137,12 +137,14 @@ class NCBIClient:
             else:
                 return response
 
-    async def esearch(self, query: str, retmax: int = 20) -> ESearchResult:
+    async def esearch(self, query: str, retmax: int = 20, sort: str = "relevance") -> ESearchResult:
         if not 1 <= retmax <= 200:
             raise ValueError("retmax must be between 1 and 200")
+        if sort not in {"relevance", "pub_date"}:
+            raise ValueError("sort must be relevance or pub_date")
         response = await self._get("esearch.fcgi", {
             "db": "pubmed", "term": query, "retmax": retmax,
-            "retmode": "json", "sort": "pub_date",
+            "retmode": "json", "sort": sort,
         })
         retrieved_at = datetime.now(timezone.utc)
         try:

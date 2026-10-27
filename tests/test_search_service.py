@@ -82,16 +82,21 @@ async def test_all_missing_is_not_empty_success(service_client, pubmed_fixture):
     assert exc.value.failures == dict.fromkeys(pubmed_fixture[0]["pmids"], "MissingRecord")
 
 
-async def test_sort_year_descending_null_last(service_client, pubmed_fixture):
+@pytest.mark.parametrize("sort", ["relevance", "pub_date"])
+async def test_esearch_order_preserved_over_efetch_order_and_year(service_client, pubmed_fixture, sort):
     root = ET.fromstring(pubmed_fixture[1])
     for record, year in zip(root, (None, "2023", "2025")):
         date = record.find("MedlineCitation/Article/Journal/JournalIssue/PubDate")
         date.remove(date.find("Year"))
         if year:
             ET.SubElement(date, "Year").text = year
+    root[:] = list(reversed(root))  # EFetch XML order differs from ESearch ranking.
     service_client.efetch_batch.return_value.batches[0].xml = ET.tostring(root, encoding="unicode")
-    result = await search(SearchRequest(gene="BRAF"), service_client)
-    assert [a.publication_year for a in result.articles] == [2025, 2023, None]
+    result = await search(SearchRequest(gene="BRAF", sort=sort), service_client)
+    assert [a.pmid for a in result.articles] == pubmed_fixture[0]["pmids"]
+    assert [a.publication_year for a in result.articles] == [None, 2023, 2025]
+    assert result.sort == sort
+    service_client.esearch.assert_awaited_once_with(result.query_string, retmax=20, sort=sort)
 
 
 @pytest.mark.parametrize("change", [

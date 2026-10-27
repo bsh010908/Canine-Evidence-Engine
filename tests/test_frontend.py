@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @pytest.fixture
 def response_body():
-    return json.loads((ROOT / "docs/stage2-response-example.json").read_text())
+    body = json.loads((ROOT / "docs/stage2-response-example.json").read_text())
+    # Captured before the response echoed sort; that capture used ESearch sort=pub_date.
+    return body | {"sort": "pub_date"}
 
 
 def app():
@@ -36,18 +38,20 @@ def test_search_calls_only_api_and_shows_metadata(monkeypatch, response_body):
     at.number_input(key="year_from").set_value(2020)
     at.number_input(key="year_to").set_value(2026)
     at.text_input(key="cancer_keyword").set_value("melanoma")
+    at.selectbox(key="sort").set_value("pub_date")
     submit(at)
     assert not at.exception and not at.error
     assert calls[0][0] == "http://127.0.0.1:9123/search"
     assert calls[0][1]["json"] == {
         "gene": "BRAF", "species": "dog", "limit": 3,
-        "year_from": 2020, "year_to": 2026, "cancer_keyword": "melanoma",
+        "year_from": 2020, "year_to": 2026, "cancer_keyword": "melanoma", "sort": "pub_date",
     }
     assert [int(metric.value) for metric in at.metric] == [93, 3]
     text = "\n".join(element.value for element in at.text)
     assert response_body["articles"][0]["pmid"] in text
     assert response_body["articles"][0]["title"] in text
     assert any("unverified" in caption.value for caption in at.caption)
+    assert any("출판일 최신순" in caption.value for caption in at.caption)
     assert any("실제 연구 대상 종의 확정" in info.value for info in at.info)
     assert len(at.get("link_button")) == 3
 

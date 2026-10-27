@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { SearchRequest, Species } from "../types";
+import { SORT_LABELS, type SearchRequest, type SortOrder, type Species } from "../types";
 const DEFAULT_LIMIT = "20";
 export default function SearchPanel({ busy, initial, onSearch }: {
   busy: boolean; initial: boolean; onSearch: (r: SearchRequest) => void;
@@ -11,11 +11,12 @@ export default function SearchPanel({ busy, initial, onSearch }: {
   const [toValue, setToValue] = useState("");
   const [keywordValue, setKeywordValue] = useState("");
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
+  const [sort, setSort] = useState<SortOrder>("relevance");
   const [error, setError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const currentYear = new Date().getUTCFullYear();
   const activeFilters = [species !== "all", period === "custom", keywordValue.trim() !== ""].filter(Boolean).length;
-  const isDefault = activeFilters === 0 && limit === DEFAULT_LIMIT && !fromValue && !toValue;
+  const isDefault = activeFilters === 0 && limit === DEFAULT_LIMIT && sort === "relevance" && !fromValue && !toValue;
   function submit(event?: FormEvent<HTMLFormElement>, selectedGene = gene) {
     event?.preventDefault();
     if (busy) return;
@@ -35,11 +36,11 @@ export default function SearchPanel({ busy, initial, onSearch }: {
       setError("암종 키워드의 특수문자를 확인해 주세요."); return;
     }
     setError("");
-    onSearch({ gene: selectedGene.trim(), species, limit: Number(limit), year_from: from, year_to: to, cancer_keyword: keyword || null });
+    onSearch({ gene: selectedGene.trim(), species, limit: Number(limit), year_from: from, year_to: to, cancer_keyword: keyword || null, sort });
   }
   function resetFilters() {
     setSpecies("all"); setPeriod("all"); setFromValue(""); setToValue("");
-    setKeywordValue(""); setLimit(DEFAULT_LIMIT); setError("");
+    setKeywordValue(""); setLimit(DEFAULT_LIMIT); setSort("relevance"); setError("");
   }
   return (
     <section className={`search-band${initial ? " initial" : ""}`} aria-label="검색 조건">
@@ -61,7 +62,7 @@ export default function SearchPanel({ busy, initial, onSearch }: {
         </button>
         <div id="search-options" className={`search-options${filtersOpen ? " open" : ""}`}>
           <fieldset className="field species-filter">
-            <legend className="field-label">종 (MeSH)</legend>
+            <legend className="field-label">종</legend>
             <div className="segmented">
               {([["all", "전체"], ["dog", "개"], ["cat", "고양이"], ["human", "사람"]] as const).map(([value, label]) => (
                 <label key={value} className={species === value ? "selected" : ""}>
@@ -89,9 +90,13 @@ export default function SearchPanel({ busy, initial, onSearch }: {
             <label className="field-label" htmlFor="limit">결과 수</label>
             <select id="limit" value={limit} onChange={e => setLimit(e.target.value)}>{[3, 10, 20, 50, 100, 200].map(n => <option key={n} value={n}>{n}건</option>)}</select>
           </div>
+          <div className="field sort-filter">
+            <label className="field-label" htmlFor="sort">정렬</label>
+            <select id="sort" value={sort} onChange={e => setSort(e.target.value as SortOrder)}>{(Object.keys(SORT_LABELS) as SortOrder[]).map(value => <option key={value} value={value}>{SORT_LABELS[value]}</option>)}</select>
+          </div>
           <button type="button" className="reset-button" onClick={resetFilters} disabled={isDefault}>조건 초기화</button>
         </div>
-        {initial && <p className="filter-note">종 (MeSH) 필터는 PubMed 색인 기준이며, 논문의 실제 연구 대상 종을 확정하지 않습니다.</p>}
+        {initial && <p className="filter-note">개·고양이는 MeSH 색인 또는 제목의 종 표현으로, 사람은 MeSH 색인으로 검색 범위를 좁힙니다. 실제 연구 대상 종을 확정하지는 않습니다.</p>}
       </form>
     </section>
   );

@@ -88,6 +88,7 @@ summary:hover { color: var(--ink); }
 .period-controls span { color: var(--subtle); }
 .cancer-filter { flex: 1 1 200px; max-width: 280px; }
 .limit-filter select { width: 96px; }
+.sort-filter select { width: 140px; }
 .reset-button { height: var(--control-h); margin-left: auto; padding: 0 4px; font-size: 14px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
 .reset-button:hover:not(:disabled) { color: var(--ink); text-decoration-color: currentColor; }
 .reset-button:disabled { color: var(--subtle); text-decoration: none; opacity: .6; }
@@ -191,8 +192,8 @@ summary:hover { color: var(--ink); }
   .segmented label { flex: 1; min-width: 0; padding: 0 4px; }
   .period-controls select { width: auto; flex: 1.2; }
   .period-controls input { width: auto; flex: 1; }
-  .limit-filter select { width: 100%; }
-  .reset-button { justify-self: end; align-self: end; }
+  .limit-filter select, .sort-filter select { width: 100%; }
+  .reset-button { grid-column: 1 / -1; justify-self: end; height: 32px; }
   .result-area { padding: 20px 0 32px; }
   .results-heading { flex-direction: column; }
   .results-heading h1 { font-size: 18px; }

@@ -23,7 +23,7 @@ class EFetchAllFailed(NCBIError):
 async def search(request: SearchRequest, client: NCBIClient) -> SearchResponse:
     searched_at = datetime.now(timezone.utc)
     query = build_query(request)
-    found = await client.esearch(query, retmax=request.limit)
+    found = await client.esearch(query, retmax=request.limit, sort=request.sort)
     articles: list[Article] = []
     failures: dict[str, str] = {}
     if found.pmids:
@@ -52,11 +52,13 @@ async def search(request: SearchRequest, client: NCBIClient) -> SearchResponse:
             logger.warning("EFetch failed PMID %s: %s", pmid, reason)
         if not articles:
             raise EFetchAllFailed(failures)
-    # Stable sort preserves first-record selection and input order for equal years.
-    articles.sort(key=lambda article: article.publication_year or 0, reverse=True)
+    # PubMed's ranking is the result order; EFetch XML order is not guaranteed to match it.
+    rank = {pmid: index for index, pmid in enumerate(found.pmids)}
+    articles.sort(key=lambda article: rank[article.pmid])
     return SearchResponse(
         articles=articles, total_count=found.total_count, returned_count=len(articles),
         searched_at=searched_at, query_string=query, query_translation=found.query_translation,
+        sort=request.sort,
         esearch_retrieved_at=found.retrieved_at, warnings=found.warnings,
         is_partial=bool(failures), failures=failures, failed_pmids=list(failures),
         failed_count=len(failures),

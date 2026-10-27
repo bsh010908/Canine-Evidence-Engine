@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from canine_evidence.models.article import Article
 from canine_evidence.models.search import ErrorResponse, SearchRequest, SearchResponse
 
+SORT_LABELS = {"relevance": "관련도순 (PubMed)", "pub_date": "출판일 최신순"}
+
 
 def fetch_search(request: SearchRequest) -> tuple[SearchResponse | None, str | None]:
     base_url = os.environ.get("CANINE_API_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -68,6 +70,7 @@ def render_results(result: SearchResponse) -> None:
     right.metric("반환된 논문 수", result.returned_count)
     st.caption(f"검색 기준: NCBI PubMed · 검색 시각 (UTC): {result.searched_at.astimezone(timezone.utc).isoformat()}")
     st.text(f"검색식: {result.query_string}")
+    st.caption(f"정렬: {SORT_LABELS[result.sort]} · 전체 검색 결과 중 정렬 기준 상위 {result.returned_count}건만 가져옵니다.")
     if result.is_partial:
         st.warning(f"부분 성공: {result.failed_count}건의 논문 데이터를 불러오지 못했습니다. 아래에는 수집된 논문만 표시합니다.")
         with st.expander("수집 실패 PMID 확인"):
@@ -82,7 +85,7 @@ def render_results(result: SearchResponse) -> None:
     if not result.articles:
         st.info("설정한 조건에서 검색된 연구 없음")
         return
-    st.info("모든 결과는 종 미확인(unverified)입니다. 종 필터는 MeSH 검색 조건이며 실제 연구 대상 종의 확정을 뜻하지 않습니다.")
+    st.info("모든 결과는 종 미확인(unverified)입니다. 종 필터는 MeSH 색인과 제목의 종 표현으로 검색 범위를 좁히는 조건이며 실제 연구 대상 종의 확정을 뜻하지 않습니다.")
     for article in result.articles:
         render_article(article)
 
@@ -95,9 +98,10 @@ def main() -> None:
     with st.form("search_form"):
         gene = st.text_input("유전자명", placeholder="예: BRAF 또는 TP53", key="gene", max_chars=200)
         left, right = st.columns(2)
-        species = left.selectbox("종 검색 필터 (MeSH)", ["dog", "cat", "human", "all"], key="species")
+        species = left.selectbox("종 검색 필터", ["dog", "cat", "human", "all"], key="species")
         limit = right.number_input("결과 개수", min_value=1, max_value=200, value=20, step=1, key="limit")
-        st.caption("MeSH 필터는 후보 문헌을 좁히는 조건입니다. 종이 확정되지 않으며, 미색인 문헌은 누락될 수 있습니다.")
+        st.caption("개·고양이는 MeSH 색인 또는 제목의 종 표현, 사람은 MeSH 색인으로 후보 문헌을 좁힙니다. 종이 확정되지 않으며 일부 문헌은 누락될 수 있습니다.")
+        sort = st.selectbox("정렬", list(SORT_LABELS), format_func=SORT_LABELS.get, key="sort")
         left, right = st.columns(2)
         current_year = datetime.now(timezone.utc).year
         year_from = left.number_input("시작 연도 (선택)", min_value=1800, max_value=current_year, value=None, step=1, key="year_from")
@@ -110,7 +114,7 @@ def main() -> None:
         st.session_state.pop("search_error", None)
         try:
             request = SearchRequest(gene=gene, species=species, limit=limit,
-                                    year_from=year_from, year_to=year_to, cancer_keyword=cancer_keyword)
+                                    year_from=year_from, year_to=year_to, cancer_keyword=cancer_keyword, sort=sort)
         except ValidationError:
             st.session_state.search_error = "입력 검증 실패: 유전자명을 입력하고 허용 문자 및 연도 범위를 확인해 주세요."
         else:

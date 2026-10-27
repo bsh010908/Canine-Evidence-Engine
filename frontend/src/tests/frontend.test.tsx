@@ -11,8 +11,10 @@ const request = {
   year_from: null,
   year_to: null,
   cancer_keyword: null,
+  sort: "relevance" as const,
 };
-const data = () => structuredClone(fixture);
+// The captured response predates the sort echo; it was retrieved with ESearch sort=pub_date.
+const data = () => ({ ...structuredClone(fixture), sort: "pub_date" });
 function mockResponse(body: unknown, status = 200) {
   const mock = vi
     .fn()
@@ -26,7 +28,7 @@ describe("API contract", () => {
   it("accepts the captured real response", () => {
     expect(parseSearchResponse(data()).returned_count).toBe(3);
   });
-  it.each(["count", "duplicate", "species", "date", "failure", "missing"])(
+  it.each(["count", "duplicate", "species", "date", "failure", "missing", "sort"])(
     "rejects malformed response: %s",
     (kind) => {
       const body = data();
@@ -36,6 +38,7 @@ describe("API contract", () => {
       if (kind === "date") body.searched_at = "bad-date";
       if (kind === "failure") body.failed_count = 1;
       if (kind === "missing") delete (body as Partial<typeof body>).articles;
+      if (kind === "sort") body.sort = "date";
       expect(() => parseSearchResponse(body)).toThrow();
     },
   );
@@ -216,6 +219,19 @@ describe("search UI", () => {
 });
 
 describe("search screen transition", () => {
+  it("sends the chosen sort and labels results with the sort the server used", async () => {
+    const mock = mockResponse(data());
+    render(<App />);
+    expect(screen.getByLabelText("정렬")).toHaveValue("relevance");
+    fireEvent.change(screen.getByLabelText(/유전자명/), { target: { value: "BRAF" } });
+    fireEvent.change(screen.getByLabelText("정렬"), { target: { value: "pub_date" } });
+    fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
+    await screen.findByText(fixture.articles[0].title);
+    expect(JSON.parse(mock.mock.calls[0][1].body).sort).toBe("pub_date");
+    expect(screen.getByText(/출판일 최신순 상위/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "조건 초기화" }));
+    expect(screen.getByLabelText("정렬")).toHaveValue("relevance");
+  });
   it("enables reset only when conditions differ from defaults and restores them", () => {
     render(<App />);
     const reset = screen.getByRole("button", { name: "조건 초기화" });
@@ -294,6 +310,7 @@ describe("search screen transition", () => {
       year_from: 2020,
       year_to: 2025,
       cancer_keyword: "melanoma",
+      sort: "relevance",
     });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });

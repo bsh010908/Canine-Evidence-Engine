@@ -40,6 +40,7 @@ export function parseSearchResponse(v: unknown): SearchResponse {
     !date(v.esearch_retrieved_at) ||
     typeof v.query_string !== "string" ||
     typeof v.query_translation !== "string" ||
+    !["relevance", "pub_date"].includes(v.sort as string) ||
     typeof v.is_partial !== "boolean" ||
     !strings(v.failed_pmids) ||
     !Number.isInteger(v.failed_count) ||

@@ -40,6 +40,26 @@ async def test_empty_search(client, respx_mock):
     assert params["retmode"] == "json" and params["db"] == "pubmed"
 
 
+@pytest.mark.parametrize("sort", ["relevance", "pub_date"])
+async def test_esearch_sends_requested_sort(client, respx_mock, sort):
+    route = respx_mock.get(BASE_URL + "esearch.fcgi").respond(json={"esearchresult": {
+        "count": "0", "idlist": [], "querytranslation": "no-match",
+    }})
+    await client.esearch("no-match", sort=sort)
+    assert route.calls[0].request.url.params["sort"] == sort
+
+
+async def test_esearch_defaults_to_relevance_and_rejects_unknown_sort(client, respx_mock):
+    route = respx_mock.get(BASE_URL + "esearch.fcgi").respond(json={"esearchresult": {
+        "count": "0", "idlist": [], "querytranslation": "no-match",
+    }})
+    await client.esearch("no-match")
+    assert route.calls[0].request.url.params["sort"] == "relevance"
+    with pytest.raises(ValueError):
+        await client.esearch("no-match", sort="most recent")
+    assert route.call_count == 1
+
+
 async def test_http_logs_redact_credentials(client, respx_mock, caplog):
     caplog.set_level(logging.DEBUG)
     respx_mock.get(BASE_URL + "esearch.fcgi").respond(json={"esearchresult": {

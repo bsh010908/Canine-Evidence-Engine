@@ -9,11 +9,33 @@ from canine_evidence.query_builder import build_query
 
 
 @pytest.mark.parametrize("species,clause", [
-    ("dog", " AND Dogs[MeSH Terms]"), ("cat", " AND Cats[MeSH Terms]"),
+    ("dog", " AND (Dogs[MeSH Terms] OR dog[ti] OR dogs[ti] OR canine[ti])"),
+    ("cat", " AND (Cats[MeSH Terms] OR cats[ti] OR feline[ti])"),
     ("human", " AND Humans[MeSH Terms]"), ("all", ""),
 ])
 def test_species_query(species, clause):
     assert build_query(SearchRequest(gene=" BRAF ", species=species)) == '"BRAF"[tiab]' + clause
+
+
+def test_all_species_adds_no_species_or_cancer_restriction():
+    query = build_query(SearchRequest(gene="BRAF", species="all"))
+    assert query == '"BRAF"[tiab]'
+
+
+def test_cat_filter_avoids_ambiguous_cat_title_term():
+    # "cat"[ti] matches acronyms such as the C-CAT genomic database.
+    assert "cat[ti]" not in build_query(SearchRequest(gene="TP53", species="cat"))
+
+
+def test_combined_dog_and_cancer_keyword():
+    query = build_query(SearchRequest(gene="BRAF", species="dog", cancer_keyword="urothelial carcinoma"))
+    assert query == ('"BRAF"[tiab] AND (Dogs[MeSH Terms] OR dog[ti] OR dogs[ti] OR canine[ti])'
+                     ' AND "urothelial carcinoma"[tiab]')
+
+
+def test_sort_defaults_to_relevance_and_accepts_pub_date():
+    assert SearchRequest(gene="BRAF").sort == "relevance"
+    assert SearchRequest(gene="BRAF", sort="pub_date").sort == "pub_date"
 
 
 def test_filters():
@@ -27,7 +49,7 @@ def test_filters():
     {"gene": "[]"}, {"gene": "---"}, {"species": "mouse"}, {"limit": 0}, {"limit": 201},
     {"year_from": 2020, "year_to": 2010}, {"year_from": 1799},
     {"year_to": datetime.now(timezone.utc).year + 1}, {"cancer_keyword": 'x" OR y'},
-    {"cancer_keyword": "x" * 201},
+    {"cancer_keyword": "x" * 201}, {"sort": "date"}, {"sort": "Author"},
 ])
 def test_invalid_inputs(kwargs):
     with pytest.raises(ValidationError):

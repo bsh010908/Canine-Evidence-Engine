@@ -1,4 +1,10 @@
 export type Species = "dog" | "cat" | "human" | "all";
+// PubMed ESearch sort values used by the backend.
+export type SortOrder = "relevance" | "pub_date";
+export const SORT_LABELS: Record<SortOrder, string> = {
+  relevance: "관련도순",
+  pub_date: "출판일 최신순",
+};
 export interface SearchRequest {
   gene: string;
   species: Species;
@@ -6,6 +12,7 @@ export interface SearchRequest {
   year_from: number | null;
   year_to: number | null;
   cancer_keyword: string | null;
+  sort: SortOrder;
 }
 export interface Article {
   pmid: string;
@@ -31,6 +38,7 @@ export interface SearchResponse {
   searched_at: string;
   query_string: string;
   query_translation: string;
+  sort: SortOrder;
   esearch_retrieved_at: string;
   is_partial: boolean;
   failed_pmids: string[];

@@ -43,13 +43,18 @@ async def test_post_search_real_fixture_pipeline(api_client, respx_mock, pubmed_
         assert body["failed_count"] == 0 and not body["from_cache"]
         assert all(a["species_status"] == "unverified" for a in body["articles"])
         assert app.state.ncbi_client is ncbi
+        assert body["sort"] == "relevance"
     assert route.call_count == 2
+    assert route.calls[0].request.url.params["sort"] == "relevance"
+    response = await http.post("/search", json={"gene": "BRAF", "limit": 3, "sort": "pub_date"})
+    assert response.json()["sort"] == "pub_date"
+    assert route.calls[-1].request.url.params["sort"] == "pub_date"
 
 
 @pytest.mark.parametrize("body", [
     {}, {"gene": " "}, {"gene": "x" * 201}, {"gene": "BRAF", "species": "mouse"},
     {"gene": "BRAF", "year_from": 2020, "year_to": 2010}, {"gene": "BRAF", "limit": 201},
-    {"gene": "BRAF", "api_key": "must-not-echo"},
+    {"gene": "BRAF", "api_key": "must-not-echo"}, {"gene": "BRAF", "sort": "most recent"},
 ])
 async def test_invalid_input_422_without_network(api_client, respx_mock, body):
     response = await api_client[1].post("/search", json=body)

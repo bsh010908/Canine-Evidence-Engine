@@ -6,6 +6,9 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validato
 
 from canine_evidence.models.article import Article
 
+# ESearch sort values: "relevance" is PubMed's relevance ranking, "pub_date" is newest publication date first.
+SortOrder = Literal["relevance", "pub_date"]
+
 
 class SearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -15,6 +18,7 @@ class SearchRequest(BaseModel):
     year_to: int | None = None
     cancer_keyword: str | None = Field(default=None, max_length=200)
     limit: int = Field(default=20, ge=1, le=200)
+    sort: SortOrder = "relevance"
 
     @field_validator("gene", mode="before")
     @classmethod
@@ -59,6 +63,7 @@ class SearchResponse(BaseModel):
     searched_at: AwareDatetime
     query_string: str
     query_translation: str
+    sort: SortOrder
     esearch_retrieved_at: AwareDatetime
     is_partial: bool = False
     failed_pmids: list[str] = Field(default_factory=list)

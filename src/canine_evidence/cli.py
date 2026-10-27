@@ -29,6 +29,7 @@ def main() -> None:
     parser.add_argument("--year-from", type=int)
     parser.add_argument("--year-to", type=int)
     parser.add_argument("--cancer-keyword")
+    parser.add_argument("--sort", choices=["relevance", "pub_date"], default="relevance")
     args = parser.parse_args()
     try:
         request = SearchRequest(**vars(args))
