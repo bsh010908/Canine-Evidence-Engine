@@ -1,0 +1,53 @@
+{
+  "source": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+  "records": [
+    {
+      "gene": "BRAF",
+      "query": "\"BRAF\"[tiab] AND Dogs[MeSH Terms]",
+      "pmids": [
+        "42775191",
+        "42847792",
+        "42680778"
+      ],
+      "total_count": 93,
+      "query_translation": "\"BRAF\"[Title/Abstract] AND \"dogs\"[MeSH Terms]",
+      "warnings": {},
+      "esearch_retrieved_at": "2026-10-27T05:24:11.701740+00:00",
+      "ncbi_retrieved_at": "2026-10-27T05:24:12.190773+00:00",
+      "esearch_file": "braf_esearch.json",
+      "efetch_file": "braf_efetch.xml",
+      "raw_efetch_sha256": "c7a655d8e1f80b1e310933876136d39a0f60699a5f6f32abda74dfb1b54301fa",
+      "stored_efetch_sha256": "caf6d208254c7776658019d38c9b740855a6ed75c66bc60fc21eabf9f782fb41",
+      "esearch_sha256": "d0a2e56c051ec6515dee56f6a8cf6871ffb16e579214ded29035e9d2057bae83",
+      "removed_contact_metadata": {
+        "AffiliationInfo": 21,
+        "Identifier": 5
+      },
+      "article_fields_unchanged": true
+    },
+    {
+      "gene": "TP53",
+      "query": "\"TP53\"[tiab] AND Dogs[MeSH Terms]",
+      "pmids": [
+        "42580051",
+        "42930160",
+        "42018306"
+      ],
+      "total_count": 84,
+      "query_translation": "\"TP53\"[Title/Abstract] AND \"dogs\"[MeSH Terms]",
+      "warnings": {},
+      "esearch_retrieved_at": "2026-10-27T05:24:12.480883+00:00",
+      "ncbi_retrieved_at": "2026-10-27T05:24:13.039711+00:00",
+      "esearch_file": "tp53_esearch.json",
+      "efetch_file": "tp53_efetch.xml",
+      "raw_efetch_sha256": "5cc862940db1eec3abe3877dc4f9b2b9fce61e4e2cf2d34d45ac5aeb74a3c7cf",
+      "stored_efetch_sha256": "4e19ab530c6b49a0732e1c303cf44091b7950cc94f136cddc784ea24834fded4",
+      "esearch_sha256": "ba6c5528a1803156fcb5462f7336721544cd6c4e1ac9f9df176dd2953011dcaf",
+      "removed_contact_metadata": {
+        "AffiliationInfo": 40,
+        "Identifier": 18
+      },
+      "article_fields_unchanged": true
+    }
+  ]
+}

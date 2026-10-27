@@ -1,0 +1,409 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Canine Evidence Engine",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/search": {
+      "post": {
+        "summary": "Search Endpoint",
+        "operationId": "search_endpoint_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Article": {
+        "properties": {
+          "pmid": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "title": "Pmid"
+          },
+          "doi": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doi"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "abstract": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstract"
+          },
+          "abstract_available": {
+            "type": "boolean",
+            "title": "Abstract Available"
+          },
+          "authors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Authors"
+          },
+          "publication_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Year"
+          },
+          "journal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Journal"
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "ncbi_retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ncbi Retrieved At"
+          },
+          "mesh_terms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mesh Terms"
+          },
+          "publication_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Publication Types"
+          },
+          "species_status": {
+            "type": "string",
+            "const": "unverified",
+            "title": "Species Status",
+            "default": "unverified"
+          },
+          "species_evidence_strength": {
+            "type": "string",
+            "const": "low",
+            "title": "Species Evidence Strength",
+            "default": "low"
+          },
+          "species_evidence_notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Species Evidence Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pmid",
+          "abstract_available",
+          "source_url",
+          "ncbi_retrieved_at"
+        ],
+        "title": "Article"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "error_type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "failed_pmids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Failed Pmids"
+          },
+          "failures": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Failures"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail",
+          "error_type"
+        ],
+        "title": "ErrorResponse"
+      },
+      "SearchRequest": {
+        "properties": {
+          "gene": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Gene"
+          },
+          "species": {
+            "type": "string",
+            "enum": [
+              "dog",
+              "cat",
+              "human",
+              "all"
+            ],
+            "title": "Species",
+            "default": "all"
+          },
+          "year_from": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year From"
+          },
+          "year_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year To"
+          },
+          "cancer_keyword": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancer Keyword"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 20
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "gene"
+        ],
+        "title": "SearchRequest"
+      },
+      "SearchResponse": {
+        "properties": {
+          "articles": {
+            "items": {
+              "$ref": "#/components/schemas/Article"
+            },
+            "type": "array",
+            "title": "Articles"
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Count"
+          },
+          "returned_count": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Returned Count"
+          },
+          "searched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Searched At"
+          },
+          "query_string": {
+            "type": "string",
+            "title": "Query String"
+          },
+          "query_translation": {
+            "type": "string",
+            "title": "Query Translation"
+          },
+          "esearch_retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Esearch Retrieved At"
+          },
+          "is_partial": {
+            "type": "boolean",
+            "title": "Is Partial",
+            "default": false
+          },
+          "failed_pmids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Failed Pmids"
+          },
+          "failed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Failed Count",
+            "default": 0
+          },
+          "failures": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Failures"
+          },
+          "warnings": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Warnings"
+          },
+          "from_cache": {
+            "type": "boolean",
+            "const": false,
+            "title": "From Cache",
+            "default": false
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "articles",
+          "total_count",
+          "returned_count",
+          "searched_at",
+          "query_string",
+          "query_translation",
+          "esearch_retrieved_at"
+        ],
+        "title": "SearchResponse"
+      }
+    }
+  }
+}

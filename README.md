@@ -2,7 +2,7 @@
 
 > 반려동물 유전자·변이와 종양 관련 연구 근거를 **검색·정리·추적**하는 Python 기반 연구 보조 서비스
 
-**프로젝트 상태:** 설계 단계 (구현 전)  
+**프로젝트 상태:** 실제 PubMed 검색, FastAPI, React 문헌 검색 화면 (Streamlit 임시 보존)  
 **대상 사용자:** 반려동물 유전체·암 연구에 관심 있는 개발자, 연구 담당자, 수의학 전문가  
 **초기 대상 종:** 개(*Canis lupus familiaris*) 중심, 추후 고양이 확장  
 **목적:** 진단이 아닌 **문헌 검색과 근거 탐색**
@@ -97,7 +97,7 @@
 | 문헌 수집 | `httpx` + NCBI E-utilities | 외부 API 호출·타임아웃·재시도 제어 |
 | 파싱·처리 | 표준 XML 파서, `pandas`(필요 시) | PubMed XML/구조화 데이터 정규화 |
 | 저장 | SQLite (로컬 MVP) | 서버 DB 없이 검색 캐시 및 기록 관리 |
-| UI | Streamlit (초기) | Python만으로 빠르게 결과 탐색, 나중에 React 분리 가능 |
+| UI | React + TypeScript + Tailwind CSS | 기본 프론트엔드, 기존 Streamlit 임시 보존 |
 | AI | OpenAI API (선택) | 출처에 제한된 한국어 요약, 구조화된 출력 |
 | 테스트 | pytest, respx | API 응답 모킹과 변환 로직 테스트 |
 
@@ -107,7 +107,8 @@
 
 ```mermaid
 flowchart TD
-    U[사용자 - Streamlit] --> S[검색 서비스]
+    U[사용자 - React] --> F[FastAPI POST /search]
+    F --> S[검색 서비스]
     S --> V[검색어 및 입력 검증]
     V --> C{유효한 캐시?}
     C -->|예| N[정규화된 논문 목록]
@@ -158,7 +159,7 @@ canine-evidence-engine/
 │       │   └── citation_validator.py
 │       └── storage/
 │           └── sqlite.py
-├── ui/
+├── frontend/
 │   └── app.py
 ├── tests/
 │   ├── fixtures/
@@ -283,30 +284,105 @@ canine-evidence-engine/
 - CSV/JSON 내보내기
 - 외부 연구자/수의사 피드백을 통한 품질 개선
 
-## 11. 실행 환경 (구현 후 사용 예정)
+## 11. 실행 환경 및 실행 방법
 
-> 다음 명령은 **개발 환경 구성 예시**입니다. 아직 애플리케이션 구현이나 `pyproject.toml`이 생성된 상태가 아니므로 이 README 파일만으로 앱이 실행되지는 않습니다.
+Python **3.12**, Conda **canine-evidence** 환경을 사용한다. 모든 명령은 프로젝트
+루트에서 실행한다. 프론트엔드와 백엔드는 같은 Git 저장소에 있다.
 
 ```bash
-python3 --version
-python3 -m venv .venv
-source .venv/bin/activate
-# pyproject.toml 및 패키지 구성 이후:
-pip install -e '.[dev]'
-streamlit run ui/app.py
+# 새 환경이 필요한 경우:
+conda env create -f environment.yml
+conda activate canine-evidence
+# 기존 환경에서는 의존성 갱신:
+python -m pip install -e '.[dev]'
 ```
 
-예상 환경 변수 (`.env.example`에 정의 예정):
+루트 `.env`에 본인의 `NCBI_EMAIL`을 설정한다. `NCBI_API_KEY`는 선택이다.
+`.env.example`은 형식 참고용이며, 이미 설정한 `.env`를 덮어쓰지 않는다.
+프론트엔드는 NCBI 인증 정보를 읽거나 전송하지 않는다.
 
-```dotenv
-NCBI_EMAIL=you@example.com
-NCBI_API_KEY=
-OPENAI_API_KEY=
-ENABLE_AI_SUMMARY=false
-DATABASE_URL=sqlite:///./data/evidence.db
+**터미널 1 — FastAPI**
+
+```bash
+conda activate canine-evidence
+uvicorn canine_evidence.api:app --host 127.0.0.1 --port 8000
 ```
 
-비밀 키와 실제 이용자/환자 정보는 Git 저장소에 올리지 않는다. 외부 서비스로 전송하는 데이터 범위를 명시하고 서비스 정책을 준수한다.
+API 계약과 시험 화면: http://127.0.0.1:8000/docs
+
+**터미널 2 — React (기본 프론트엔드)**
+
+Node.js 22.12 이상 또는 24 LTS 환경에서 실행한다. Python 백엔드는 기존 Conda
+환경을 그대로 사용한다.
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+브라우저에서 Vite가 출력하는 로컬 주소(기본 http://127.0.0.1:5173)를 연다.
+React는 `/api/search`를 호출하고 Vite 프록시는 FastAPI의 `/search`로 전달한다.
+기본 백엔드는 `http://127.0.0.1:8000`이며, 다른 포트는 Vite 실행 시 설정한다.
+
+```bash
+CANINE_API_URL=http://127.0.0.1:8000 npm run dev
+```
+
+백엔드의 `.env`를 프론트엔드에 복사하지 않는다. NCBI 이메일과 API 키는 브라우저에
+전달하지 않는다. Vite 프록시는 개발용이며 배포 시 동일 출처 프록시 설정이 필요하다.
+
+```bash
+npm run test
+npm run typecheck
+npm run build
+```
+
+프로덕션 빌드는 `frontend/dist/`에 생성된다. 정적 빌드만으로는 FastAPI 프록시가
+제공되지 않는다. 이번 작업에는 배포 구성이 포함되지 않는다.
+
+**기존 Streamlit — 임시 보존**
+
+```bash
+conda activate canine-evidence
+streamlit run frontend/app.py --server.address 127.0.0.1 --server.port 8501 --browser.gatherUsageStats false
+```
+
+브라우저에서 http://127.0.0.1:8501 을 연다. 유전자명, 종 검색 필터, 결과 개수,
+선택적 연도 범위·암종 키워드를 입력한다. Streamlit은 FastAPI `POST /search`만
+HTTP로 호출한다. 백엔드 주소를 바꾸려면 프론트엔드 프로세스의 환경변수
+`CANINE_API_URL`을 설정한다(기본 `http://127.0.0.1:8000`).
+
+```bash
+CANINE_API_URL=http://127.0.0.1:8000 streamlit run frontend/app.py
+```
+
+화면에는 전체 검색 건수·반환 건수·UTC 검색 시각·부분 성공 여부와 논문별
+제목·저자·연도·DOI·초록·PMID·PubMed 링크를 표시한다. 누락된 값은 ‘정보 없음’으로
+표시한다. 종 상태는 모두 **unverified**이며 MeSH 종 필터는 실제 연구 대상 종의
+확정을 의미하지 않는다. 초록 기반 문헌 탐색 결과이며 임상적 판단을 제공하지 않는다.
+
+서버 연결 실패, 입력 오류, NCBI 오류, 전체 수집 실패, 부분 성공, 정상 0건을 구분한다.
+오류 시 입력은 유지하고 이전 검색 결과는 지워 오해를 방지한다. 화면 재실행을 위한
+현재 결과만 세션 메모리에 유지하며 검색 캐시나 DB는 사용하지 않는다.
+
+**테스트**
+
+```bash
+python -m pytest -q
+NCBI_LIVE_TEST=1 python -m pytest -m live_api -q -s
+```
+
+기본 테스트는 외부 NCBI 호출 없이 실행한다. live 테스트는 유효한 NCBI 설정과
+네트워크 연결이 필요하다. 기존 Streamlit 테스트는 AppTest로 실행한다. React 테스트는 frontend/에서 npm run test로 실행하며 실제 응답 fixture와 HTTP Mock을 사용한다.
+
+**현재 범위와 제한**
+
+- SQLite 캐시, AI 요약, 종 확정 알고리즘, 로그인, 배포는 구현하지 않았다.
+- 백엔드는 단일 worker로 실행한다. 여러 프로세스의 NCBI 호출 제한 합산은 미지원이다.
+- UI 응답 대기는 180초이며, 초과 시 서버 검색이 계속 진행 중일 수 있다.
+- API 키, 개인 이메일, `.env`를 Git이나 로그에 기록하지 않는다.
+- 구현된 API 상세와 설계 차이는 `docs/stage2.md`를 참고한다.
 
 ## 12. 주요 설계 결정
 

@@ -1,0 +1,11 @@
+.env
+*.db
+__pycache__/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+data/
+node_modules/
+frontend/.vite/
+*.tsbuildinfo

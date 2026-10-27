@@ -1,0 +1,131 @@
+{
+  "articles": [
+    {
+      "pmid": "42775191",
+      "doi": null,
+      "title": "Antitumor effects of CEP32496 on urothelial carcinoma with BRAF mutation (V595E) in dogs.",
+      "abstract": "Canine urothelial carcinoma (UC) has a BRAF gene mutation (V595E) with a high prevalence rate (67 to 87%). CEP32496 is a novel and highly potent BRAF inhibitor. As described in the literature, the efficacy of BRAF inhibitors, including CEP32496, for UC with V595E is limited. The objective of this study was to evaluate the effects of CEP32496 alone and in combination with other BRAF inhibitors on the cell viability and tumor growth of 5 UC cell lines with V595E. For reference, 7 BRAF inhibitors, including GDC0879, PLX4720, encorafenib, vemurafenib, dabrafenib, AZ628, and RAF265, were also evaluated. The results revealed that CEP32496 had a sensitive half-maximal inhibitory concentration (IC50) ranging from 16 nM to 150 nM. In addition, the combination of CEP32496 and vemurafenib resulted in lower IC50s than those of individual treatment. The synergism of CEP32496 with vemurafenib may be due to the different mechanisms of cell proliferation between the 2 inhibitors. In the xenograft model, 10 mg/kg body weight of CEP32496 resulted in a significant decrease (P < 0.05) in tumor growth in mice, with severe and extensive necrosis on histopathological examination. These results suggested that CEP32496 exerts antitumor effects on both cell proliferation and tumor growth in UC with V595E.",
+      "abstract_available": true,
+      "authors": [
+        "Yamasaki Hirofumi",
+        "Hiramatsu Hiromi",
+        "Nakamichi Jun",
+        "Tei Meina",
+        "Uematsu Yosuke",
+        "Uchida Kazuyuki",
+        "Ono Kenichiro",
+        "Hirao Hidehiro"
+      ],
+      "publication_year": 2026,
+      "journal": "Canadian journal of veterinary research = Revue canadienne de recherche veterinaire",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/42775191/",
+      "ncbi_retrieved_at": "2026-10-27T05:32:01.720941Z",
+      "mesh_terms": [
+        "Animals",
+        "Dogs",
+        "Proto-Oncogene Proteins B-raf",
+        "Dog Diseases",
+        "Antineoplastic Agents",
+        "Cell Line, Tumor",
+        "Mutation",
+        "Sulfonamides",
+        "Urinary Bladder Neoplasms",
+        "Indoles",
+        "Pyrroles"
+      ],
+      "publication_types": [
+        "Journal Article"
+      ],
+      "species_status": "unverified",
+      "species_evidence_strength": "low",
+      "species_evidence_notes": []
+    },
+    {
+      "pmid": "42847792",
+      "doi": "10.4142/jvs.25370",
+      "title": "Genomic-guided precision oncology in canine cancer: from comparative genomics to liquid biopsy and molecular monitoring.",
+      "abstract": "IMPORTANCE: Traditional cancer diagnostics in veterinary medicine are limited by invasiveness and insufficient sensitivity for real-time molecular monitoring. This review critically evaluates the clinical applicability of somatic mutation profiling and liquid biopsy technologies to establish an evidence-based, tiered framework for precision oncology in canine patients, with emphasis on veterinary-specific constraints and technology selection.\nOBSERVATIONS: Key somatic biomarkers demonstrate strong clinical utility: BRAF V595E achieves > 80% diagnostic sensitivity in canine urothelial carcinoma and is detectable non-invasively in urine via droplet digital polymerase chain reaction (ddPCR). The multicenter cancer detection in dogs (CANDiD) study demonstrated circulating tumor DNA-based liquid biopsy achieves 54.7% overall sensitivity and 98.5% specificity, though stage I detection remains critically limited at 16.1%, underscoring the current gap for early-stage screening. Minimal residual disease assessment via allele-specific oligonucleotide-PCR and next-generation sequencing enables detection of molecular relapse 42-168 days before clinical manifestation in canine lymphoma. However, analytical variability across platforms, lack of standardized pipelines, and high cost represent significant barriers to routine veterinary application.\nCONCLUSIONS AND RELEVANCE: Genomic-guided oncology offers substantial clinical value for canine cancer management yet requires veterinary-specific validation before broad adoption. Targeted sequencing panels currently represent the optimal balance of cost-effectiveness and clinical utility for most veterinary practitioners, while ddPCR is preferred for longitudinal tracking of known mutations. Liquid biopsy cannot serve as a standalone screening tool at present, but functions as a valuable complementary monitoring approach. Continued canine-specific biomarker research and multicenter data sharing are essential prerequisites for integrating precision medicine into routine veterinary care.",
+      "abstract_available": true,
+      "authors": [
+        "Kang Minjeong",
+        "Kim Jaemin",
+        "Park Jinho",
+        "Yu DoHyeon"
+      ],
+      "publication_year": 2026,
+      "journal": "Journal of veterinary science",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/42847792/",
+      "ncbi_retrieved_at": "2026-10-27T05:32:01.720941Z",
+      "mesh_terms": [
+        "Animals",
+        "Dogs",
+        "Dog Diseases",
+        "Liquid Biopsy",
+        "Genomics",
+        "Neoplasms",
+        "Precision Medicine",
+        "Biomarkers, Tumor"
+      ],
+      "publication_types": [
+        "Journal Article",
+        "Review"
+      ],
+      "species_status": "unverified",
+      "species_evidence_strength": "low",
+      "species_evidence_notes": []
+    },
+    {
+      "pmid": "42680778",
+      "doi": "10.1038/s41598-026-64955-1",
+      "title": "Sorafenib/piroxicam therapy with biomarker-defined survival benefit in canine muscle-invasive urothelial carcinoma.",
+      "abstract": "Molecular-targeted therapies require biomarker-driven evaluation to optimize precision oncology strategies; however, translational models integrating clinical outcomes with mechanistic biomarkers are limited. Canine urothelial carcinoma shares molecular features with human muscle-invasive bladder cancer, including activation of VEGFR signaling, providing a valuable comparative oncology platform. Sorafenib is a multi-kinase inhibitor targeting VEGFRs, PDGFRβ, BRAF, and related pathways, but its therapeutic mechanisms and clinical benefit in urothelial carcinoma remain incompletely understood. In this study, 43 dogs with naturally occurring urothelial carcinoma received first-line sorafenib and piroxicam therapy. The overall response rate was 62.8%, with median progression-free and overall survival of 175 (range, 31-665) and 407 (range, 103-1,723) days, respectively. The results exceeded outcomes in historical controls treated with piroxicam alone. Treatment was generally well tolerated, with only three grade 3 adverse events and no grade 4-5 toxicities. Biomarker analyses revealed that treatment-induced hypertension and high tumor CX3CL1 mRNA expression were independently associated with improved overall survival, suggesting that effective VEGFR pathway inhibition and modulation of the tumor immune microenvironment contribute to clinical benefit. These findings support sorafenib-based therapy as a promising strategy for canine urothelial carcinoma and highlight the translational potential of biomarker-driven VEGFR-targeted approaches in precision oncology.",
+      "abstract_available": true,
+      "authors": [
+        "Maeda Shingo",
+        "Yokota Shohei",
+        "Komori Mao",
+        "Goto-Koshino Yuko",
+        "Chambers James K",
+        "Uchida Kazuyuki",
+        "Yonezawa Tomohiro",
+        "Momoi Yasuyuki"
+      ],
+      "publication_year": 2026,
+      "journal": "Scientific reports",
+      "source_url": "https://pubmed.ncbi.nlm.nih.gov/42680778/",
+      "ncbi_retrieved_at": "2026-10-27T05:32:01.720941Z",
+      "mesh_terms": [
+        "Animals",
+        "Dogs",
+        "Piroxicam",
+        "Sorafenib",
+        "Urinary Bladder Neoplasms",
+        "Biomarkers, Tumor",
+        "Female",
+        "Dog Diseases",
+        "Male",
+        "Carcinoma, Transitional Cell",
+        "Antineoplastic Combined Chemotherapy Protocols"
+      ],
+      "publication_types": [
+        "Journal Article"
+      ],
+      "species_status": "unverified",
+      "species_evidence_strength": "low",
+      "species_evidence_notes": []
+    }
+  ],
+  "total_count": 93,
+  "returned_count": 3,
+  "searched_at": "2026-10-27T05:32:00.474562Z",
+  "query_string": "\"BRAF\"[tiab] AND Dogs[MeSH Terms]",
+  "query_translation": "\"BRAF\"[Title/Abstract] AND \"dogs\"[MeSH Terms]",
+  "esearch_retrieved_at": "2026-10-27T05:32:00.818968Z",
+  "is_partial": false,
+  "failed_pmids": [],
+  "failed_count": 0,
+  "failures": {},
+  "warnings": {},
+  "from_cache": false,
+  "message": null
+}
