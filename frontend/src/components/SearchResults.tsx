@@ -52,8 +52,8 @@ export default function SearchResults({
         ) : result ? (
           <>
             <p className="evidence-note">
-              종 필터는 검색 범위를 좁히는 조건입니다. 각 논문의 실제 연구 대상
-              종은 확인되지 않았으므로(unverified) 원문에서 확인해 주세요.
+              종 필터는 MeSH·제목 기준이며 실제 연구 대상 종을 보장하지 않습니다.
+              검색어 강조는 원문 표기 위치만 나타냅니다.
             </p>
             {result.is_partial && (
               <div className="partial-note" role="status">
@@ -91,7 +91,7 @@ export default function SearchResults({
             {result.articles.length ? (
               <div className="article-list">
                 {result.articles.map((a, i) => (
-                  <ArticleCard key={a.pmid} article={a} index={i} />
+                  <ArticleCard key={a.pmid} article={a} index={i} term={request?.gene ?? ""} />
                 ))}
               </div>
             ) : (

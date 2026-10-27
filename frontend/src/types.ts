@@ -26,6 +26,7 @@ export interface Article {
   source_url: string;
   ncbi_retrieved_at: string;
   mesh_terms: string[];
+  keywords: string[];
   publication_types: string[];
   species_status: "unverified";
   species_evidence_strength: "low";

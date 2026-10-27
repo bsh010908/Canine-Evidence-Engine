@@ -1,17 +1,37 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { findTermMatches, termPattern } from "../matching";
 import type { Article } from "../types";
+function highlight(text: string, term: string): ReactNode {
+  const pattern = termPattern(term);
+  if (!pattern) return text;
+  // split() with a capturing group puts matches at odd indexes.
+  return text
+    .split(new RegExp(`(${pattern.source})`, pattern.flags))
+    .map((part, i) => (i % 2 ? <mark key={i}>{part}</mark> : part));
+}
 export default function ArticleCard({
   article,
   index,
+  term,
 }: {
   article: Article;
   index: number;
+  term: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [allAuthors, setAllAuthors] = useState(false);
   const validSource =
     article.source_url === `https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`;
   const abstractId = `abstract-${article.pmid}`;
+  const matches = findTermMatches(article, term);
+  const places = matches
+    ? [
+        matches.inTitle && "제목",
+        matches.abstractCount > 0 && `초록 ${matches.abstractCount}회`,
+        matches.keywords.length > 0 && "저자 키워드",
+      ].filter((place): place is string => Boolean(place))
+    : [];
+  const matchLabelId = `match-${article.pmid}`;
   return (
     <article className="article-card">
       <p className="article-meta">
@@ -19,7 +39,7 @@ export default function ArticleCard({
         <span className="journal">{article.journal || "저널 정보 없음"}</span>
         <span className="year">{article.publication_year ?? "연도 없음"}</span>
       </p>
-      <h3>{article.title || "제목 정보 없음"}</h3>
+      <h3>{article.title ? highlight(article.title, term) : "제목 정보 없음"}</h3>
       <p className="authors">
         {article.authors.length
           ? (allAuthors ? article.authors : article.authors.slice(0, 3)).join(
@@ -37,10 +57,24 @@ export default function ArticleCard({
           </button>
         )}
       </p>
+      {matches && (
+        <div className="match-summary">
+          <span className="match-label" id={matchLabelId}>검색어 일치</span>
+          {places.length ? (
+            <ul className="match-tags" aria-labelledby={matchLabelId}>
+              {places.map((place) => (
+                <li key={place}>{place}</li>
+              ))}
+            </ul>
+          ) : (
+            <span>제목·초록·저자 키워드에서 "{term}" 표기를 찾지 못했습니다.</span>
+          )}
+        </div>
+      )}
       {article.abstract_available && article.abstract ? (
         <div className="abstract">
           <p id={abstractId} className={expanded ? "" : "line-clamp-3"}>
-            {article.abstract}
+            {highlight(article.abstract, term)}
           </p>
           <button
             type="button"
@@ -51,6 +85,18 @@ export default function ArticleCard({
           >
             {expanded ? "초록 접기" : "초록 펼치기"}
           </button>
+          {matches && matches.abstractSentences.length > 0 && !expanded && (
+            <details className="match-sentences">
+              <summary>
+                검색어가 나온 문장 {matches.abstractSentences.length}개
+              </summary>
+              <ul>
+                {matches.abstractSentences.map((sentence, i) => (
+                  <li key={i}>{highlight(sentence, term)}</li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       ) : (
         <p className="abstract muted">초록 없음</p>
@@ -86,6 +132,9 @@ export default function ArticleCard({
         <p>NCBI 수집 시각 (UTC): {article.ncbi_retrieved_at}</p>
         {article.mesh_terms.length > 0 && (
           <p>MeSH: {article.mesh_terms.join(" · ")}</p>
+        )}
+        {article.keywords.length > 0 && (
+          <p>저자 키워드: {article.keywords.join(" · ")}</p>
         )}
       </details>
     </article>

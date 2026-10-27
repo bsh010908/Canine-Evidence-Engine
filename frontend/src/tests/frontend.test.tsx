@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import fixture from "../../../docs/stage2-response-example.json";
 import { parseSearchResponse, search } from "../api";
 import App from "../App";
 import SearchResults from "../components/SearchResults";
+import { findTermMatches, splitSentences, termPattern } from "../matching";
 const request = {
   gene: "BRAF",
   species: "dog" as const,
@@ -13,8 +14,22 @@ const request = {
   cancer_keyword: null,
   sort: "relevance" as const,
 };
-// The captured response predates the sort echo; it was retrieved with ESearch sort=pub_date.
-const data = () => ({ ...structuredClone(fixture), sort: "pub_date" });
+// The captured response predates the sort and keywords fields. It was retrieved with
+// ESearch sort=pub_date; keywords are the real NOTNLM keywords for the same PMIDs in
+// tests/fixtures/pubmed/braf_efetch.xml.
+const capturedKeywords: Record<string, string[]> = {
+  "42775191": [],
+  "42847792": ["Neoplasms", "circulating tumor DNA", "minimal residual disease", "next-generation sequencing", "precision medicine"],
+  "42680778": ["Bladder cancer", "Canine", "On-target toxicity", "Spontaneous animal model", "Transitional cell carcinoma"],
+};
+const data = () => {
+  const body = structuredClone(fixture);
+  return {
+    ...body,
+    sort: "pub_date",
+    articles: body.articles.map((a) => ({ ...a, keywords: capturedKeywords[a.pmid] })),
+  };
+};
 function mockResponse(body: unknown, status = 200) {
   const mock = vi
     .fn()
@@ -90,7 +105,7 @@ describe("search UI", () => {
       target: { value: "3" },
     });
     fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
-    await screen.findByText(fixture.articles[0].title);
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
     expect(mock.mock.calls[0][0]).toBe("/api/search");
     expect(JSON.parse(mock.mock.calls[0][1].body)).toEqual({ ...request, species: "all" });
     expect(screen.getAllByRole("article")).toHaveLength(3);
@@ -200,7 +215,7 @@ describe("search UI", () => {
     const mock = mockResponse(data());
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "BRAF" }));
-    await screen.findByText(fixture.articles[0].title);
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
     let reject!: (e: Error) => void;
     mock.mockImplementationOnce(
       () =>
@@ -226,7 +241,7 @@ describe("search screen transition", () => {
     fireEvent.change(screen.getByLabelText(/유전자명/), { target: { value: "BRAF" } });
     fireEvent.change(screen.getByLabelText("정렬"), { target: { value: "pub_date" } });
     fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
-    await screen.findByText(fixture.articles[0].title);
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
     expect(JSON.parse(mock.mock.calls[0][1].body).sort).toBe("pub_date");
     expect(screen.getByText(/출판일 최신순 상위/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "조건 초기화" }));
@@ -257,7 +272,7 @@ describe("search screen transition", () => {
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "BRAF" }));
     await screen.findByRole("heading", { name: "BRAF 검색 결과" });
-    await screen.findByText(fixture.articles[0].title);
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
     expect(mock).toHaveBeenCalledOnce();
     expect(JSON.parse(mock.mock.calls[0][1].body).gene).toBe("BRAF");
     expect(
@@ -286,7 +301,7 @@ describe("search screen transition", () => {
       target: { value: "melanoma" },
     });
     fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
-    await screen.findByText(fixture.articles[0].title);
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
     expect(screen.getByLabelText("사람")).toBeChecked();
     expect(screen.getByLabelText("시작 연도")).toHaveValue(2020);
     expect(screen.getByLabelText("종료 연도")).toHaveValue(2025);
@@ -301,7 +316,7 @@ describe("search screen transition", () => {
     expect(screen.getByLabelText(/유전자명/)).toHaveValue("BRAF");
     expect(screen.getByLabelText("암종 키워드")).toHaveValue("melanoma");
     fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
-    await screen.findByText(fixture.articles[0].title);
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
     expect(mock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(mock.mock.calls[2][1].body)).toEqual({
       gene: "BRAF",
@@ -313,5 +328,53 @@ describe("search screen transition", () => {
       sort: "relevance",
     });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+describe("search term location", () => {
+  const articles = () => parseSearchResponse(data()).articles;
+  it("matches whole tokens case-insensitively only", () => {
+    const pattern = termPattern("BRAF")!;
+    expect("BRAF-mutant and braf/MEK".match(pattern)).toEqual(["BRAF", "braf"]);
+    expect("BRAFV595E".match(pattern)).toBeNull();
+    // Spelling seen in PMID 21779496, which PubMed returns for "BRAF"[tiab].
+    expect("Raf-1, B-Raf, and A-Raf".match(pattern)).toEqual(["B-Raf"]);
+    expect("c-kit and CKIT".match(termPattern("c-kit")!)).toEqual(["c-kit", "CKIT"]);
+    expect(termPattern("  ")).toBeNull();
+  });
+  it("returns verbatim abstract sentences from the real record", () => {
+    const [first] = articles();
+    const result = findTermMatches(first, "BRAF")!;
+    expect(result.inTitle).toBe(true);
+    expect(result.abstractCount).toBeGreaterThan(0);
+    for (const sentence of result.abstractSentences) {
+      expect(first.abstract).toContain(sentence);
+      expect(sentence).toMatch(/BRAF/i);
+    }
+    expect(splitSentences(first.abstract!).join(" ").length).toBeGreaterThan(0);
+  });
+  it("reports keyword matches and never invents a location", () => {
+    const article = articles()[1];
+    expect(article.title).not.toMatch(/BRAF/i);
+    // Fault injection: drop the real abstract so only title and keywords remain.
+    const bare = { ...article, abstract: null, abstract_available: false };
+    expect(findTermMatches(bare, "BRAF")).toEqual({
+      inTitle: false, abstractSentences: [], abstractCount: 0, keywords: [],
+    });
+    expect(findTermMatches(bare, "circulating tumor DNA")!.keywords).toEqual(["circulating tumor DNA"]);
+  });
+  it("shows locations and matched sentences in the card", () => {
+    const body = data();
+    // Fault injection on a real record: remove the abstract to show the no-match message.
+    body.articles[1] = { ...body.articles[1], abstract: null as unknown as string, abstract_available: false };
+    render(<SearchResults result={parseSearchResponse(body)} request={request} busy={false} error="" />);
+    const [first, second] = screen.getAllByRole("article");
+    const tags = within(first).getByRole("list", { name: "검색어 일치" });
+    expect(within(tags).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "제목", expect.stringMatching(/^초록 \d+회$/),
+    ]);
+    expect(first.querySelector("h3 mark")).toHaveTextContent("BRAF");
+    expect(first).toHaveTextContent(/검색어가 나온 문장 \d+개/);
+    expect(second).toHaveTextContent('제목·초록·저자 키워드에서 "BRAF" 표기를 찾지 못했습니다.');
   });
 });

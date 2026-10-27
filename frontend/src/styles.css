@@ -124,6 +124,15 @@ summary:hover { color: var(--ink); }
 .authors { font-size: 14px; color: var(--muted); }
 .authors .text-button { margin-left: 6px; }
 .abstract { margin-top: 10px; font-size: 14px; }
+/* 검색어 위치: 표기 위치만 표시하며 내용 판단은 하지 않는다 */
+mark { background: #e3ede6; color: inherit; border-radius: 2px; padding: 0 1px; }
+.match-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--text); }
+.match-label { margin-right: 2px; color: var(--muted); }
+.match-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.match-sentences { margin-top: 6px; font-size: 13px; }
+.match-sentences summary { color: var(--green); font-weight: 600; }
+.match-sentences ul { margin-top: 6px; padding-left: 12px; border-left: 2px solid var(--line); display: grid; gap: 6px; }
+.match-sentences li { line-height: 1.65; color: var(--text); overflow-wrap: anywhere; }
 .abstract p { line-height: 1.7; color: var(--text); white-space: pre-line; overflow-wrap: anywhere; }
 .abstract .text-button { margin-top: 4px; }
 .article-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: 13px; }
@@ -131,7 +140,7 @@ summary:hover { color: var(--ink); }
 .identifiers div { display: flex; gap: 6px; min-width: 0; }
 .identifiers dt { color: var(--subtle); }
 .identifiers dd { color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; user-select: all; }
-.species-badge { padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.species-badge, .match-tags li { padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; }
 .source-link { font-weight: 600; color: var(--green); text-decoration: none; white-space: nowrap; border-radius: 3px; }
 .source-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .record-details { margin-top: 6px; font-size: 12px; color: var(--subtle); overflow-wrap: anywhere; }

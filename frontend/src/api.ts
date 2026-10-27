@@ -16,6 +16,7 @@ function article(v: unknown): v is Article {
     ["title", "doi", "abstract", "journal"].every((k) => nullableText(v[k])) &&
     strings(v.authors) &&
     strings(v.mesh_terms) &&
+    strings(v.keywords) &&
     strings(v.publication_types) &&
     strings(v.species_evidence_notes) &&
     typeof v.abstract_available === "boolean" &&

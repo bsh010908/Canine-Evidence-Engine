@@ -80,6 +80,8 @@ def parse_efetch_xml(xml_text: str, *, retrieved_at: datetime) -> list[Article]:
                         if (text := _text(node))],
             publication_types=[text for node in source.findall("PublicationTypeList/PublicationType")
                                if (text := _text(node))],
+            keywords=[text for node in citation.findall('KeywordList[@Owner="NOTNLM"]/Keyword')
+                      if (text := _text(node))],
         ))
     if excluded:
         logger.warning("Excluded %d NCBI records: missing or invalid PMID", excluded)

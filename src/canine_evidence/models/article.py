@@ -16,6 +16,8 @@ class Article(BaseModel):
     source_url: str
     ncbi_retrieved_at: AwareDatetime
     mesh_terms: list[str] = Field(default_factory=list)
+    # Author-supplied keywords (KeywordList Owner="NOTNLM"); PubMed [tiab] also searches them.
+    keywords: list[str] = Field(default_factory=list)
     publication_types: list[str] = Field(default_factory=list)
     species_status: Literal["unverified"] = "unverified"
     species_evidence_strength: Literal["low"] = "low"

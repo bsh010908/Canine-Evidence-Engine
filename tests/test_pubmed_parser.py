@@ -43,6 +43,8 @@ def test_real_xml_mapping(gene):
         assert article.species_evidence_notes == []
         assert article.mesh_terms == [n.text for n in citation.findall("MeshHeadingList/MeshHeading/DescriptorName")]
         assert article.publication_types == [n.text for n in source.findall("PublicationTypeList/PublicationType")]
+        assert article.keywords == ["".join(n.itertext()).strip()
+                                    for n in citation.findall('KeywordList[@Owner="NOTNLM"]/Keyword')]
         expected_year = source.findtext("Journal/JournalIssue/PubDate/Year")
         assert article.publication_year == (int(expected_year) if expected_year else None)
         expected_sections = []
@@ -71,13 +73,14 @@ def test_missing_optional_fields(source_record):
     # Fault injection only: delete real fields; no fictitious paper is created.
     for parent, tag in [(source, "Abstract"), (source, "ArticleTitle"), (source, "AuthorList"),
                         (source, "Journal"), (source, "PublicationTypeList"),
-                        (citation, "MeshHeadingList"), (record, "PubmedData")]:
+                        (citation, "MeshHeadingList"), (citation, "KeywordList"), (record, "PubmedData")]:
         for child in parent.findall(tag):
             parent.remove(child)
     article = parse_efetch_xml(ET.tostring(root, encoding="unicode"), retrieved_at=timestamp)[0]
     assert article.abstract is None and not article.abstract_available
     assert article.doi is None and article.title is None and article.publication_year is None
     assert article.authors == [] and article.mesh_terms == [] and article.publication_types == []
+    assert article.keywords == []
     assert article.journal is None
 
 
@@ -133,3 +136,13 @@ def test_bad_xml_not_empty_success(xml):
 def test_naive_timestamp_rejected():
     with pytest.raises(ValueError, match="timezone-aware"):
         parse_efetch_xml("<PubmedArticleSet/>", retrieved_at=datetime(2026, 1, 1))
+
+
+def test_only_author_keywords_are_kept(source_record):
+    root, timestamp = source_record
+    citation = root[0].find("MedlineCitation")
+    # Fault injection: relabel a real keyword list as NLM-owned; it is not an author keyword.
+    for keyword_list in citation.findall("KeywordList"):
+        keyword_list.set("Owner", "NLM")
+    article = parse_efetch_xml(ET.tostring(root, encoding="unicode"), retrieved_at=timestamp)[0]
+    assert article.keywords == []
