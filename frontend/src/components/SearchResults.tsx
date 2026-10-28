@@ -1,4 +1,11 @@
-import { SORT_LABELS, type SearchRequest, type SearchResponse } from "../types";
+import { SORT_LABELS, type SearchRequest, type SearchResponse, type Species } from "../types";
+// Must match SPECIES_FILTERS in src/canine_evidence/query_builder.py.
+const SPECIES_NOTES: Record<Species, string> = {
+  all: "",
+  dog: "개 필터는 MeSH(Dogs) 또는 제목의 dog·dogs·canine 기준이며 실제 연구 대상 종을 보장하지 않습니다. ",
+  cat: "고양이 필터는 MeSH(Cats) 또는 제목의 cats·feline 기준이며 실제 연구 대상 종을 보장하지 않습니다. ",
+  human: "사람 필터는 MeSH(Humans) 기준이며 실제 연구 대상 종을 보장하지 않습니다. ",
+};
 import ArticleCard from "./ArticleCard";
 export default function SearchResults({
   result,
@@ -52,7 +59,7 @@ export default function SearchResults({
         ) : result ? (
           <>
             <p className="evidence-note">
-              종 필터는 MeSH·제목 기준이며 실제 연구 대상 종을 보장하지 않습니다.
+              {request && SPECIES_NOTES[request.species]}
               검색어 강조는 원문 표기 위치만 나타냅니다.
             </p>
             {result.is_partial && (

@@ -1,11 +1,13 @@
+import re
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from canine_evidence.config import Settings
 from canine_evidence.models.search import SearchRequest
-from canine_evidence.query_builder import build_query
+from canine_evidence.query_builder import SPECIES_FILTERS, build_query
 
 
 @pytest.mark.parametrize("species,clause", [
@@ -77,3 +79,14 @@ def test_dotenv_and_environment_precedence(monkeypatch, tmp_path):
     assert Settings.from_env().email == "local@example.invalid"
     monkeypatch.setenv("NCBI_EMAIL", "shell@example.invalid")
     assert Settings.from_env().email == "shell@example.invalid"
+
+
+def test_react_species_note_matches_query_clauses():
+    # The results note in the React UI restates SPECIES_FILTERS; keep them in sync.
+    source = (Path(__file__).resolve().parents[1] / "frontend/src/components/SearchResults.tsx").read_text()
+    for species, clause in SPECIES_FILTERS.items():
+        note = re.search(rf'^\s*{species}: "(.*)",$', source, re.M).group(1)
+        mesh = re.search(r"(\w+)\[MeSH Terms\]", clause).group(1)
+        assert f"MeSH({mesh})" in note
+        title_terms = re.findall(r"(\w+)\[ti\]", clause)
+        assert re.findall(r"제목의 ([\w·]+) 기준", note) == (["·".join(title_terms)] if title_terms else [])

@@ -1,6 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { findTermMatches, termPattern } from "../matching";
 import type { Article } from "../types";
+// Labels for the backend species_status value only. Adding a status must add a label here,
+// and a label must not claim review or evidence the backend has not recorded.
+const SPECIES_STATUS_LABELS: Record<Article["species_status"], string> = {
+  unverified: "미확인",
+};
 function highlight(text: string, term: string): ReactNode {
   const pattern = termPattern(term);
   if (!pattern) return text;
@@ -111,8 +116,11 @@ export default function ArticleCard({
             <dt>DOI</dt>
             <dd>{article.doi || "정보 없음"}</dd>
           </div>
+          <div>
+            <dt>연구 대상 종</dt>
+            <dd>{SPECIES_STATUS_LABELS[article.species_status]}</dd>
+          </div>
         </dl>
-        <span className="species-badge">연구 대상 종 미확인</span>
         {validSource ? (
           <a
             className="source-link"

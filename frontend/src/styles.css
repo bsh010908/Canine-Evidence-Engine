@@ -140,7 +140,7 @@ mark { background: #e3ede6; color: inherit; border-radius: 2px; padding: 0 1px; 
 .identifiers div { display: flex; gap: 6px; min-width: 0; }
 .identifiers dt { color: var(--subtle); }
 .identifiers dd { color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; user-select: all; }
-.species-badge, .match-tags li { padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.match-tags li { padding: 2px 8px; border: 1px solid var(--line-strong); border-radius: 4px; font-size: 12px; color: var(--muted); white-space: nowrap; }
 .source-link { font-weight: 600; color: var(--green); text-decoration: none; white-space: nowrap; border-radius: 3px; }
 .source-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .record-details { margin-top: 6px; font-size: 12px; color: var(--subtle); overflow-wrap: anywhere; }

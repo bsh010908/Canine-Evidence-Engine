@@ -112,7 +112,12 @@ describe("search UI", () => {
     expect(
       screen.getAllByRole("link", { name: /PubMed 원본/ })[0],
     ).toHaveAttribute("href", fixture.articles[0].source_url);
-    expect(screen.getAllByText("연구 대상 종 미확인")).toHaveLength(3);
+    for (const card of screen.getAllByRole("article")) {
+      const terms = within(card).getAllByRole("term").map((dt) => dt.textContent);
+      const values = within(card).getAllByRole("definition").map((dd) => dd.textContent);
+      expect(values[terms.indexOf("연구 대상 종")]).toBe("미확인");
+    }
+    expect(screen.queryByText(/연구 대상 종 미확인/)).not.toBeInTheDocument();
     fireEvent.click(
       screen.getAllByRole("button", { name: "초록 펼치기" })[0],
     );
@@ -376,5 +381,54 @@ describe("search term location", () => {
     expect(first.querySelector("h3 mark")).toHaveTextContent("BRAF");
     expect(first).toHaveTextContent(/검색어가 나온 문장 \d+개/);
     expect(second).toHaveTextContent('제목·초록·저자 키워드에서 "BRAF" 표기를 찾지 못했습니다.');
+  });
+});
+
+describe("species filter note", () => {
+  it.each([
+    ["dog", "개 필터는 MeSH(Dogs) 또는 제목의 dog·dogs·canine 기준"],
+    ["cat", "고양이 필터는 MeSH(Cats) 또는 제목의 cats·feline 기준"],
+    ["human", "사람 필터는 MeSH(Humans) 기준이며"],
+  ] as const)("describes the %s query clause actually sent", (species, text) => {
+    render(<SearchResults result={parseSearchResponse(data())} request={{ ...request, species }} busy={false} error="" />);
+    expect(screen.getByText(/검색어 강조는/)).toHaveTextContent(text);
+  });
+  it("omits the species sentence when no species filter is applied", () => {
+    render(<SearchResults result={parseSearchResponse(data())} request={{ ...request, species: "all" }} busy={false} error="" />);
+    expect(screen.getByText(/검색어 강조는/)).not.toHaveTextContent("필터는");
+  });
+});
+
+describe("horizontal search filters", () => {
+  it("shows filters immediately and has only one quick search for each gene", () => {
+    render(<App />);
+    expect(screen.getByLabelText("전체")).toBeChecked();
+    expect(screen.getByLabelText("발행 연도")).toBeVisible();
+    expect(screen.getByLabelText("암종 키워드")).toBeVisible();
+    expect(screen.getAllByRole("button", { name: "BRAF" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "TP53" })).toHaveLength(1);
+  });
+  it("resets filters while preserving the gene and omits hidden year values", async () => {
+    const mock = mockResponse(data());
+    render(<App />);
+    fireEvent.change(screen.getByLabelText(/유전자명/), { target: { value: "BRAF" } });
+    fireEvent.change(screen.getByLabelText("발행 연도"), { target: { value: "custom" } });
+    fireEvent.change(screen.getByLabelText("시작 연도"), { target: { value: "2020" } });
+    fireEvent.change(screen.getByLabelText("발행 연도"), { target: { value: "all" } });
+    fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
+    await screen.findByRole("heading", { name: fixture.articles[0].title });
+    expect(JSON.parse(mock.mock.calls[0][1].body).year_from).toBeNull();
+    fireEvent.click(screen.getByLabelText("개"));
+    fireEvent.change(screen.getByLabelText("암종 키워드"), { target: { value: "melanoma" } });
+    fireEvent.change(screen.getByLabelText("결과 수"), { target: { value: "3" } });
+    fireEvent.click(screen.getByRole("button", { name: "조건 초기화" }));
+    expect(screen.getByLabelText(/유전자명/)).toHaveValue("BRAF");
+    expect(screen.getByLabelText("전체")).toBeChecked();
+    expect(screen.getByLabelText("암종 키워드")).toHaveValue("");
+    expect(screen.getByLabelText("결과 수")).toHaveValue("20");
+    expect(screen.queryByLabelText("시작 연도")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "논문 검색" }));
+    await waitFor(() => expect(mock).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(mock.mock.calls[1][1].body)).toEqual({ ...request, species: "all", limit: 20 });
   });
 });
